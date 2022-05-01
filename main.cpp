@@ -1,287 +1,281 @@
-#include <iostream>
+#include <bits/stdc++.h>
 #include <fstream>
-#include <vector>
 #include <cstdlib>
-#include <ctime>
-#include <chrono>
-#include <thread>
-#include <stdio.h>
-#include <conio.h>
-#include <stdlib.h>
-#include <algorithm>
+
 
 using namespace std;
-using namespace std::chrono;
 
-ifstream f("teste_in.txt");
-ofstream g("afisare_sortari.txt");
+ifstream fin("meargeheap.in");
+ofstream fout("meargeheap.out");
 
-unsigned int n,mx;
-vector<unsigned long long> v;
-vector<unsigned long long> c;
-
-void bubblesort()
-{
-    int aux, i, j;
-    for( i=0; i < v.size()-1; i++)
-    {
-        for (j = 0; j < v.size() - i - 1; j++)
-        {
-            if (v[j] > v[j + 1])
-            {
-                aux = v[j];
-                v[j] = v[j + 1];
-                v[j + 1] = aux;
-            }
-        }
-    }
-}
-
-void QuickSort1(int st, int dr)
-{
-    if(st < dr)
-    {
-        int m = (st + dr) / 2;
-        int aux = v[st];
-        v[st] = v[m];
-        v[m] = aux;
-        int i = st , j = dr, d = 0;
-        while(i < j)
-        {
-            if(v[i] > v[j])
-            {
-                aux = v[i];
-                v[i] = v[j];
-                v[j] = aux;
-                d = 1 - d;
-            }
-            i += d;
-            j -= 1 - d;
-        }
-        QuickSort1(st , i - 1);
-        QuickSort1(i + 1 , dr);
-    }
-}
-
-int mediana_din_3(int st,int dr)
-{
-    int mij=(st+dr)/2;
-    if(v[dr] < v[st])
-        swap(v[st], v[dr]);
-    if (v[mij] < v[st])
-        swap(v[mij],v[st]);
-    if (v[dr] < v[mij])
-        swap(v[dr],v[mij]);
-    return mij;
-}
-
-void QuickSort2(int st,int dr)
-{
-    if(st<dr)
-    {
-        int i,j;
-        unsigned long long pivot;
-        i=st;j=dr;
-        pivot=v[mediana_din_3(st,dr)];
-        do
-        {
-            while(v[i]<pivot)i++;
-            while(v[j]>pivot)j--;
-            if(i<=j)
-            {
-                swap(v[i],v[j]);
-                i++;
-                j--;
-            }
-        }while(i<=j);
-        if(st<j)QuickSort2(st,j);
-        if(i<dr)QuickSort2(i,dr);
-    }
-}
+struct nod {
+    int val, grad;
+    nod * parinte, * fiu, *frate;
+};
 
 
-/*void interclaseare(int st, int dr)
-{
-    vector<unsigned long long> w;
-    int k=0, mij = (st+dr)/2, i, j;
-    i=st;
-    j=mij+1;
-    while(i<=mij && j<=dr)
-    {
-        if(v[i]<v[j])
-            w[++k]=v[i++];
-        else w[++k]=v[j++];
-    }
-    if(i<=mij)
-        for(;i<=mij;i++)
-            w[++k]=v[i];
-    else for(;j<=dr;j++)
-            w[++k]=v[j];
-    for(i=st,j=1;i<=dr;i++,j++)
-        v[i]=w[j];
+/*
+nod* nodNou(int n) {
+    nod * nodNou = new nod;
+    nodNou->val = x;
+    nodNou->grad = 0;
+    nodNou->parinte = NULL;
+    nodNou->fiu = NULL;
+    nodNou->frate = NULL;
+    return nodNou;
 }
 */
 
-void MergeSort(int st, int dr)
-{
-    if(st < dr)
-    {
-        int m = (st + dr) / 2;
-        MergeSort(st , m);
-        MergeSort(m + 1 , dr);
-        //Interclasare
-        int i = st, j = m + 1, k = 0;
-        while( i <= m && j <= dr )
-            if( v[i] < v[j])
-                c[++k] = v[i++];
-            else
-                c[++k] = v[j++];
-        while(i <= m)
-            c[++k] = v[i++];
-        while(j <= dr)
-            c[++k] = v[j++];
-        for(i = st , j = 1 ; i <= dr ; i ++ , j ++)
-            v[i] = c[j];
-    }
-}
 
-int maxim()
-{
-    int mx = v[0];
-    int i;
-    for(i=1;i<n;i++)
-    {
-        if (v[i]>mx)
-            mx = v[i];
-    }
-    return mx;
-}
+class BinomialHeap {
+private:
+    nod *h1;
+    nod *h2;
 
-void count_sort(int shift)
-{
-    vector<int> c(v.size(),0);
-    int vf[8]={0};
-    for(int i=0;i<v.size();i++)
-        vf[(v[i]>>shift)&7]++;
-    for(int i=1;i<8;i++)
-        vf[i]+=vf[i-1];
-    for(int i=v.size()-1;i>=0;i--)
-    {
-        c[vf[(v[i]>>shift)&7]-1]=v[i];
-        vf[(v[i]>>shift)&7]--;
-    }
-    for(int i=0;i<v.size();i++)
-        v[i]=c[i];
-}
-
-void RadixSort()
-{
-    for (int shift = 0; (mx >> shift) > 0; shift += 2)
-        count_sort(shift);
-
-}
-
-void CountSort()
-{
-    int mx=maxim();
-    unsigned long long frecventa[100001]={0};
-    for(int i=0;i<v.size();i++)
-    {
-        frecventa[v[i]]++;
-    }
-    v.clear();
-    for(int i=0;i<mx;i++)
-    {
-        while (frecventa[i]>0)
+public:
+    nod* creareNod(int);
+    nod* initializareHeap();
+    nod* mergeHeap(nod*, nod*);
+    nod* reuniune(nod*, nod*);
+    nod* insereaza(nod*, nod*);
+    nod* minim(nod*);
+    //nod* maxim(nod*);
+    int revizuire(nod*);
+    BinomialHeap()
         {
-            v.push_back(i);
-            frecventa[i]--;
+            h1 = initializareHeap();
+            h2 = initializareHeap();
+
+        }
+};
+
+nod* BinomialHeap::creareNod(int x){
+    nod * nodNou = new nod;
+    nodNou->val = x;
+    nodNou->grad = 0;
+    nodNou->parinte = NULL;
+    nodNou->fiu = NULL;
+    nodNou->frate = NULL;
+    return nodNou;
+}
+
+nod* BinomialHeap::initializareHeap() {
+    nod* nd;
+    nd = NULL;
+    return nd;
+}
+
+nod* BinomialHeap::insereaza(nod* h1, nod* n){
+    nod* h3 = initializareHeap();
+    h3 = n;
+    h1 = reuniune(h1, h3);
+    return h1;
+}
+
+nod* BinomialHeap::mergeHeap(nod* h3, nod* h4){
+    nod* h1 = initializareHeap();
+    nod* n1;
+    nod* n2;
+    nod* n3;
+    nod* n4;
+    n3 = h3;
+    n4 = h4;
+    if(n3 != NULL)
+    {
+        if(n4 != NULL)
+        {
+            if(n3->grad <= n4->grad)
+            {
+                h1 = n3;
+            }
+            else if(n3->grad > n4->grad)
+            {
+                h1 = n4;
+            }
+            else
+            {
+                h1 = n3;
+            }
         }
     }
-}
-
-void sortSTL()
-{
-    sort(v.begin(),v.end());
-}
-
-int test_sort()
-{
-    for(int i=0;i<v.size()-1;i++)
-            if(v[i]>v[i+1])
-            {
-                return 0;
-            }
-    return 1;
-}
-
-void Timp_de_executie( int nr_sortare)
-{
-
-    auto start = high_resolution_clock::now();
-    if(nr_sortare==1)
-    {
-        bubblesort();
-    }
-    else if (nr_sortare==2)
-    {
-        QuickSort1(0,n-1);
-    }
-    else if (nr_sortare==3)
-    {
-        MergeSort( 0,n-1);
-    }
-    else if (nr_sortare==4)
-    {
-        RadixSort();
-    }
-    else if (nr_sortare==5)
-    {
-        CountSort();
-    }
-    else if (nr_sortare==6)
-    {
-        sortSTL();
-    }
-    else if (nr_sortare==7)
-    {
-        QuickSort2(0,n-1);
-    }
-    auto end = high_resolution_clock::now();
-    auto duration = duration_cast<milliseconds>(end-start);
-    int ok;
-    ok=test_sort();
-    if (ok==1)
-        g<<"Algortimul a sortat vectorul corect in "<<duration.count()<<" milisecunde"<<"\n";
     else
     {
-        if (nr_sortare==1)g<<"Algoritmul bubblesort nu a sortat corect vectorul"<<"\n";
-        else if (nr_sortare==2)g<<"Algoritmul quicksort1 nu a sortat corect vectorul"<<"\n";
-        else if (nr_sortare==3)g<<"Algoritmul mergesort nu a sortat corect vectorul"<<"\n";
-        else if (nr_sortare==4)g<<"Algoritmul radixsort nu a sortat corect vectorul"<<"\n";
-        else if (nr_sortare==5)g<<"Algoritmul countsort nu a sortat corect vectorul"<<"\n";
-        else if (nr_sortare==6)g<<"Algoritmul din stl nu a sortat corect vectorul"<<"\n";
-        else if (nr_sortare==7)g<<"Algoritmul quicksort2 nu a sortat corect vectorul"<<"\n";
+        h1 = n4;
+    }
+    while (n3 != NULL && n4 != NULL)
+    {
+        if(n3->grad < n4->grad)
+        {
+            n3 = n3->frate;
+        }
+        else if(n3->grad == n4->grad)
+        {
+            n1 = n3->frate;
+            n3->frate = n4;
+            n3 = n1;
+        }
+        else
+        {
+            n2 = n4->frate;
+            n4->frate = n3;
+            n4 = n2;
+        }
+    }
+    return h1;
+}
+
+nod* BinomialHeap::reuniune(nod* h3, nod* h4){
+    nod* h1 = initializareHeap();
+    h1 = mergeHeap(h3, h4);
+    if(h1 == NULL)
+        return h1;
+    nod* prev_n;
+    nod* next_n;
+    nod* n;
+    n = h1;
+    prev_n = NULL;
+    next_n = n->frate;
+    while(next_n != NULL)
+    {
+        if((n->grad != next_n->grad) || ((next_n->frate != NULL) && ((next_n->frate)->grad == n->grad)))
+        {
+            prev_n = n;
+            n = next_n;
+        }
+        else
+        {
+            if(n->val <= next_n->val)
+            {
+                n->frate = next_n->frate;
+
+                next_n->parinte = n;
+                next_n->frate = n->fiu;
+                n->fiu = next_n;
+                n->grad = n->grad + 1;
+            }
+            else
+            {
+                if(prev_n == NULL)
+                {
+                    h1 = next_n;
+                }
+                else
+                {
+                   prev_n->frate = next_n;
+                }
+                n->parinte = next_n;
+                n->frate = next_n->fiu;
+                next_n->fiu = n;
+                next_n->grad = next_n->grad + 1;
+                n = next_n;
+            }
+        }
+        next_n = n->frate;
+    }
+    return h1;
+}
+
+nod* BinomialHeap::minim(nod* h3) {
+    h2 = NULL;
+    nod* t = NULL;
+    nod* x = h3;
+    if(x == NULL)
+    {
+        fout<<"Heap-ul este gol"<<'\n';
+        return x;
+    }
+    int minn = x->val;
+    nod* y = x;
+    while(y->frate != NULL)
+    {
+        if((y->frate)->val < minn)
+        {
+            minn = (y->frate)->val;
+            t = y;
+            x = y->frate;
+        }
+        y = y->frate;
+    }
+    if(t == NULL && x->frate == NULL)
+    {
+        h3 = NULL;
+    }
+    else if(t == NULL)
+    {
+        h3 = x->frate;
+    }
+    else if(t->frate == NULL)
+    {
+        t = NULL;
+    }
+    else
+    {
+        t->frate = x->frate;
+    }
+    if(x->fiu != NULL)
+    {
+        revizuire(x->fiu);
+        (x->fiu)->frate == NULL;
+    }
+    h1 = reuniune(h3, h2);
+    return x;
+}
+
+int BinomialHeap::revizuire(nod* n){
+    if(n->frate != NULL)
+    {
+        revizuire(n->frate);
+        (n->frate)->frate = n;
+    }
+    else
+    {
+        h2 = n;
     }
 }
 
 int main()
 {
-    int x,i;
-    srand(time(0));
-    f>>n;
-    for(i=0;i<n;i++)
+    int rand();
+    BinomialHeap heap;
+    nod* n1;
+    nod* n2;
+
+    nod* n3;
+    nod* h;
+    h = heap.initializareHeap();
+    int nr,q,m,x,op,a,b;
+    fin>>nr>>q;
+    for(int i=1;i<=q;i++)
     {
-        x=rand()%1000+1000000;
-        v.push_back(x);
-        c.push_back(x);
+        fin>>op;
+        if(op == 1)
+        {
+            fin>>m>>x;
+            n1 = heap.initializareHeap();
+            n1 = heap.creareNod(m);
+            //n2 = heap.creareNod(x);
+            for(int i=0; i< 10000; i++)
+            {
+               n2 = heap.creareNod(rand()%10000);
+               h = heap.insereaza(n1,n2);
+            }
+            //fout<< n1 << n2;
+            //h = heap.insereaza(n1,n2);
+        }
+        else if(op == 2)
+        {
+            fin >> x;
+            n3 = heap.creareNod(x);
+            n1 = heap.minim(n3);
+            fout<<n1 <<'\n';
+        }
+        else if(op == 3)
+        {
+            fin>>a>>b;
+            n1 = heap.creareNod(a);
+            n2 = heap.creareNod(b);
+            h = heap.reuniune(n1,n2);
+        }
     }
-    g<<"n este: "<<n<<"\n";
-    mx=maxim();
-    Timp_de_executie(1);
-    //for(i=0;i<n;i++)
-    //{
-    //    g<<v[i]<<' ';
-    //}
-    //return 0;
+    return 0;
 }
